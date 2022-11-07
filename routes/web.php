@@ -43,3 +43,7 @@ Route::post('/getBarang', [BarangController::class, 'getBarang'])->middleware('a
 Route::post('/getGrafikBarang', [DashboardConroller::class, 'getGrafikBarang'])->middleware('auth');
 // report route
 Route::get('/report', [ReportController::class, 'index'])->middleware('auth');
+// fileter route
+Route::post('/searchReport', [ReportController::class, 'filterhReport'])->middleware('auth');
+// get all data report
+Route::get('/getAllReport', [ReportController::class, 'getReportData'])->middleware('auth');

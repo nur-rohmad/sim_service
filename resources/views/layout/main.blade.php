@@ -18,7 +18,7 @@
     <!-- swet alert -->
     <link rel="stylesheet" href="/plugins/sweetalert2/sweetalert2.min.css">
     <script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
-    @yield('addcss');
+    @yield('addcss')
 </head>
 
 <body>
@@ -70,7 +70,7 @@
     <script src="/js/sidebarmenu.js"></script>
     <!--Custom JavaScript -->
     <script src="/js/custom.js"></script>
-    @yield('addscript');
+    @yield('addscript')
     <script>
         function confrimLogout(){
             Swal.fire({

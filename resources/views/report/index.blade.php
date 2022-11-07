@@ -1,4 +1,7 @@
-@extends('layout.main');
+@extends('layout.main')
+@section('addcss')
+
+@endsection
 @section('main')
 <div class="page-breadcrumb">
     <div class="row align-items-center">
@@ -24,9 +27,24 @@
                 </div>
                 <div class="card-body">
                     {{-- search filter --}}
-                    <div class="row">
+                    <form id="filterReport" action="/searchReport">
+                        @csrf
+                        <div class="row my-2">
+                            <div class="col-md-2" id="tgl_awal">
+                                <input type="date" name="tgl_service_awal" class="form-control" id="tgl_service_awal">
 
-                    </div>
+                            </div>
+
+                            <div class="col-md-2 me-3">
+                                <input type="date" name="tgl_service_akhir" class="form-control" id="tgl_service_akhir">
+                            </div>
+                            <button type="button" id="btn_kirim"
+                                class="btn btn-circle btn-info text-white col-md-1 me-2"><i
+                                    class="fas fa-search"></i></button>
+                            <button type="button" id="btn_reset" class="btn btn-circle btn-outline-dark  col-md-1"><i
+                                    class="fas fa-undo"></i></button>
+                        </div>
+                    </form>
                     {{-- end search filter --}}
                     <div class="table-responsive py-4">
                         <table class="table user-table no-wrap">
@@ -42,37 +60,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($data as $result)
-                                <tr>
-                                    <td>{{ $loop->iteration }} </td>
-                                    <td>{{ date("d M Y", strtotime($result->tgl_service)) }}</td>
-                                    <td>{{ $result->nama_pelanggan}}</td>
-                                    <td>
-                                        @foreach ($result->detail as $result2)
-                                        {{ $result2->jasa }} <br><br>
-                                        @endforeach
-                                    </td>
-                                    <td>
-                                        @foreach ($result->detail as $result2)
-                                        {{ number_format($result2->harga_satuan) }} <br><br>
-                                        @endforeach
-                                    </td>
-                                    <td>
-                                        @foreach ($result->detail as $result2)
-                                        {{ number_format($result2->jumlah) }} <br><br>
-                                        @endforeach
-                                    </td>
-                                    <td>
-                                        @foreach ($result->detail as $result2)
-                                        {{ number_format($result2->total_harga) }} <br><br>
-                                        @endforeach
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6" class="fw-bold" align="center">Total</td>
-                                    <td class="fw-bold">{{ number_format($result->total_bayar)}}</td>
-                                </tr>
-                                @endforeach
+
                             </tbody>
                         </table>
                     </div>
@@ -81,4 +69,132 @@
         </div>
     </div>
 </div>
+
+
+@endsection
+@section('addscript')
+<script>
+    $(document).ready(function() {
+        getAllData()
+        
+    })
+    // get all data
+    function getAllData(){
+            $.ajax({
+            url: "/getAllReport",
+            type: "GET",
+            dataType: "JSON",
+            encode: true,
+            beforeSend: function(){
+            $("tbody").html(`<tr>
+                <td colspan="7" align="center">
+                    <div class="spinner-grow" role="status">
+                        <div class="spinner-grow" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                </td>
+            </tr>
+            `)
+            },
+            success:function(data){
+            console.log(data.data);
+            let dataTable = pasteData(data.data)
+            $("tbody").html(dataTable)
+            },
+            error:function(xhr, status, error){
+            console.log("gagal")
+            console.log(xhr.responseText)
+            }
+            })
+    }
+    // function ketika button reset
+    $("#btn_reset").click((event)=>{
+        $('#tgl_service_awal').val("")
+        $('#tgl_service_akhir').val("")
+            getAllData()
+    })
+    // function ketika button search
+    $("#btn_kirim").click((event)=>{
+        // ajax for submit data
+        $.ajax({
+            url: "/searchReport",
+            type: "POST",
+            data: {
+                'tgl_service_awal' : $('#tgl_service_awal').val(),
+                'tgl_service_akhir' : $('#tgl_service_akhir').val(),
+                '_token': $("meta[name='csrf-token']").attr("content")
+            },
+            dataType: "JSON",
+            encode: true,
+            beforeSend: function(){
+                $("tbody").html(`<tr>
+                    <td colspan="7" align="center"> <div class="spinner-grow" role="status">
+                      <div class="spinner-grow" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    </td>
+                </tr>    
+                `)
+            },
+            success:function(data){
+                console.log(data)
+                if (data.status == "OK") {
+                    if (data.data.length <= 0) { let empetyTable=`<tr>
+                        <td colspan="7" align="center"> <i class="fas fa-folder-open fa-2x mt-2"></i>
+                            <p>Data Tidak di Temukan</p>
+                        </td>
+                        </tr>`
+                        $("tbody").html(empetyTable)
+                        }else{
+                        let dataTable = pasteData(data.data)
+                        $("tbody").html(dataTable)
+                        }
+                }else{
+                    let empetyTable=`<tr>
+                        <td colspan="7" align="center"> <i class="fas fa-folder-open fa-2x mt-2"></i>
+                            <p>Data Tidak di Temukan</p>
+                        </td>
+                    </tr>`
+                    $("tbody").html(empetyTable)
+                  $("#error_tgl_awal").removeClass("none");
+                  console.log(data.data.tgl_service_awal)
+                  $("#error_tgl_awal").text(data.data.tgl_service_awal);
+                }
+               
+            },
+            error:function(xhr, status, error){
+                console.log("gagal")
+                console.log(xhr.responseText)
+            }
+        });
+   
+    })
+    // funcution add data in table
+    function pasteData(data){
+       return  data.map((result)=>{
+        return `<tr>
+            <td></td>
+            <td>${result.tgl_service}</td>
+            <td>${result.nama_pelanggan}</td>
+            <td>`+ result.detail.map((item) => {
+                return `${item.jasa} <br><br>`
+                }) +`</td>
+            <td>`+ result.detail.map((item) => {
+                return `${item.harga_satuan} <br><br>`
+                }) +`</td>
+            <td>`+ result.detail.map((item) => {
+                return `${item.jumlah} <br><br>`
+                }) +`</td>
+            <td>`+ result.detail.map((item) => {
+                return `${item.total_harga } <br><br>`
+                }) +`</td>
+        </tr>
+        <tr>
+            <td colspan="6" class="fw-bold" align="center">Total</td>
+            <td>${result.total_bayar}</td>
+        </tr>`
+        })
+    }
+</script>
+
 @endsection

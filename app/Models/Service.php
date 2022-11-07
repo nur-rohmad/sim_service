@@ -60,4 +60,18 @@ class Service extends Model
         // dd($data);
         return $data;
     }
+
+    // get report by tgl service
+    public function getReportBy($tgl_awal, $tgl_akhir)
+    {
+        $data = DB::select("SELECT * FROM service_table WHERE DATE(tgl_service) BETWEEN '$tgl_awal' AND '$tgl_akhir'");
+        // menampung data service dan detail
+        $reportData = [];
+        foreach ($data as $key => $value) {
+            $idService = $value->id_service;
+            $data[$key]->detail = DB::select("SELECT * FROM detail_service WHERE id_service = $idService");
+        }
+        // dd($data);
+        return $data;
+    }
 }
